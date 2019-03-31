@@ -66,8 +66,22 @@ namespace BOTW_SaveConv
                     using (var progress = new ProgressBar())
                     {
                         Console.WriteLine(Environment.NewLine + "Processing " + Path.GetFileName(Path.GetDirectoryName(file)) + "/" + Path.GetFileName(file));
-                        for (int h = 0; h < f.Length / 4; h++)
+
+                        for (int h = 0; h < f.Length / 4; h++) 
                         {
+                            if (file.Contains("trackblock") && h == 0) 
+                            {
+                                br.BaseStream.Position = 4;
+                                byte[] reverseHeader = br.ReadBytes(2);
+
+                                Array.Reverse(reverseHeader);
+
+                                BinaryWriter endianUpd = new BinaryWriter(fs);
+                                fs.Position = 4;
+                                endianUpd.Write(reverseHeader);
+                                h = 2;
+                            }
+
                             br.BaseStream.Position = h * 4;
                             byte[] EndianConv = br.ReadBytes(Convert.ToInt32(4));
 
@@ -86,7 +100,7 @@ namespace BOTW_SaveConv
                                 Skip = false;
                             }
 
-                            if (CheckString(EndianConv) == false && Skip == false) // make sure we don't convert strings
+                            if (!CheckString(EndianConv) && !Skip) // make sure we don't convert strings
                             {
                                 Array.Reverse(EndianConv);
 
@@ -94,7 +108,7 @@ namespace BOTW_SaveConv
                                 fs.Position = h * 4;
                                 EndianUpd.Write(EndianConv);
                             }
-                            else if (Skip == false)
+                            else if (!Skip)
                             {
                                 h++;
                                 for (int i = 0; i < 16; i++)
